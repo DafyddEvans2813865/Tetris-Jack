@@ -1,0 +1,211 @@
+class Board{
+    field Array grid;
+    field int width, height;
+    field int originX, originY, GRID_SIZE;
+
+    constructor Board new(int boardWidth, int boardHeight, int startX, int startY, int cellSize) {
+        var int row, col;
+        var Array currentRow;
+        let width = boardWidth;
+        let height = boardHeight;
+        let originX = startX;
+        let originY = startY;
+        let GRID_SIZE = cellSize;
+        let grid = Array.new(height);
+        let row = 0;
+        while (row < height){
+            let currentRow = Array.new(width);
+            let col =0;
+
+            while(col < width){
+                let currentRow[col] = 0;
+                let col = col + 1;
+
+            }
+
+            let grid[row] = currentRow;
+            let row = row + 1;
+        }
+
+        return this;
+    }
+
+    method boolean canPlace(Array cells){
+        var int i,row,col;
+        var Array cell, gridRow;
+        let i = 0;
+        while (i<4){
+            let cell = cells[i];
+            let row = cell[0];
+            let col = cell[1];
+
+            // Not operator - Cell is on-board vertically
+            
+            if (~(row < 0)) {
+                // left edge, right edge, or bottom edge.
+                if ((col < 0) | (col > (width - 1)) | (row > (height - 1))) {
+                    return false;
+                }
+
+                let gridRow = grid[row];
+
+                //is grid empty
+                if (~(gridRow[col] = 0)) {
+                    return false;
+                }
+
+            } else // r < 0 means this cell is above the visible board
+            {
+                //check if within horizontal bounds
+                if ((col < 0) | (col > (width - 1))) {
+                    return false;
+                }
+            }
+            let i = i + 1;
+        }
+
+        return true;
+    }
+
+    method int lock(Array cells,int type, Array touchedRows){
+        var int i, row, col, count, j;
+        var Array cell, gridRow;
+        var boolean found;
+
+        let i = 0;
+        let count = 0;
+
+        while (i < 4) {
+            let cell = cells[i];
+            let row = cell[0];
+            let col = cell[1];
+            let gridRow = grid[row];
+            let gridRow[col] = type;
+
+            let found = false;
+            let j = 0;
+            while (j < count) {
+                if (touchedRows[j] = row) {
+                    let found = true;
+                }
+                let j = j + 1;
+            }
+            
+            //add to top row
+            if (~found) {
+                let touchedRows[count] = row;
+                let count = count + 1;
+            }
+
+            let i = i + 1;
+        }
+        return count;
+    }   
+
+    method boolean isRowFull(int row) {
+        var int col;
+        var Array gridRow;
+        let gridRow = grid[row];
+        let col = 0;
+
+        //loop checking for any missing col in the row 
+        while (col < width) {
+            if (gridRow[col] = 0) {
+                return false;
+            }
+            let col = col + 1;
+        }
+        return true;
+    }
+
+    method void clearRow(int row) {
+        var int i, col;
+        var Array newRow;
+
+        // shift every row above current row down by one
+        let i = row;
+
+        while (i > 0) {
+            let grid[i] = grid[i - 1];
+            let i = i - 1;
+        }
+
+        // empty current row 
+        let newRow = Array.new(width);
+        let col = 0;
+        while (col < width) {
+            let newRow[col] = 0;
+            let col = col + 1;
+        }
+        let grid[0] = newRow;
+        return;
+    }
+
+    method void checkAndClearLines(Array touchedRows, int rowCount) {
+        var int i, j, row, temp;
+        var Array fullRows;
+        var int fullCount;
+        let fullRows = Array.new(4);
+        let fullCount = 0;
+
+        // which rows are full
+        let i = 0;
+        while (i < rowCount) {
+            let row = touchedRows[i];
+            if (isRowFull(row)) {
+                let fullRows[fullCount] = row;
+                let fullCount = fullCount + 1;
+            }
+            let i = i + 1;
+        }
+
+        // Sort ascending
+        let i = 1;
+        while (i < fullCount) {
+            let temp = fullRows[i];
+            let j = i - 1;
+            while ((j > -1) & (fullRows[j] > temp)) {
+                let fullRows[j + 1] = fullRows[j];
+                let j = j - 1;
+            }
+            let fullRows[j + 1] = temp;
+            let i = i + 1;
+        }
+
+        // clear smallest index first
+        let i = 0;
+        while (i < fullCount) {
+            do clearRow(fullRows[i]);
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void draw() {
+        var int row, col, screenX, screenY;
+        var Array gridRow;
+
+        // TODO: this redraws every locked cell every frame, even though
+        // locked cells only change when a line clears or a piece locks.
+        // Revisit once the game loop is running -> track a "dirty" flag set only on lock/clear
+
+        let row = 0;
+        while (row < height) {
+            let gridRow = grid[row];
+            let col = 0;
+            while (col < width) {
+                if (~(gridRow[col] = 0)) {
+                    let screenX = originX + (col * GRID_SIZE);
+                    let screenY = originY + (row * GRID_SIZE);
+                    do Screen.setColor(true);
+                    do Screen.drawRectangle(screenX, screenY, screenX + GRID_SIZE - 1, screenY + GRID_SIZE - 1);
+                }
+                let col = col + 1;
+            }
+            let row = row + 1;
+        }
+        return;
+    }
+
+}
+
