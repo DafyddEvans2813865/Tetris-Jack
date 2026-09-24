@@ -178,4 +178,20 @@ class Piece{
         do Memory.deAlloc(this);
         return;
     } 
+
+    method int getType() {
+        return type;
+    }
+
+    method int getX() {
+        return x;
+    }
+
+    method int getY() {
+        return y;
+    }
+
+    method int getRotation() {
+        return rotation;
+    }
 }

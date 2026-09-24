@@ -1,0 +1,93 @@
+class Game {
+    field Board board;
+    field Piece currentPiece;
+    field int boardWidth, boardHeight, boardOriginX, boardOriginY, cellSize;
+    field int spawnX, spawnY;
+    field int gravityCounter, gravityInterval;
+    field boolean gameOver;
+    field boolean rotateWasDown;   
+    field int moveCounter, moveDelay; 
+
+    constructor Game new() {
+        let boardWidth = 10;
+        let boardHeight = 12;
+        let boardOriginX = 50;
+        let boardOriginY = 20;
+        let cellSize = 15;
+        let spawnX = 4;
+        let spawnY = 0;
+        let gameOver = false;
+        let gravityCounter = 0;
+        let gravityInterval = 30;
+        let rotateWasDown = false;
+        let moveCounter = 0;
+        let moveDelay = 6;
+  
+
+        let board = Board.new(boardWidth, boardHeight, boardOriginX, boardOriginY, cellSize);
+        do Piece.init();
+
+        let currentPiece = Piece.new(Random.randomType(), spawnX, spawnY, boardOriginX, boardOriginY, cellSize);
+
+        return this;
+    }
+
+    method void run(){
+        var Array touchedRows;
+        var int rowCount, nextType, key;
+        let touchedRows = Array.new(4);
+
+        while (~gameOver) {
+            let key = Keyboard.keyPressed();
+
+            // Rotation
+            if ((key = 131) & (~rotateWasDown)) {   // 131 = up arrow
+                do currentPiece.rotate(board);
+            }
+            let rotateWasDown = (key = 131);
+
+            // Horizontal movement
+            if ((key = 130) | (key = 132)) {   // 130 = left, 132 = right
+                if (moveCounter = 0) {
+                    if (key = 130) {
+                        do currentPiece.moveHorizontal(board, -1);
+                    }
+                    if (key = 132) {
+                        do currentPiece.moveHorizontal(board, 1);
+                    }
+                    let moveCounter = moveDelay;   
+                }
+            }
+            if (moveCounter > 0) {
+                let moveCounter = moveCounter - 1;
+            }
+
+            //Gavity
+            let gravityCounter = gravityCounter + 1;
+            if (gravityCounter > (gravityInterval - 1)) {
+                let gravityCounter = 0;
+
+                if (~(currentPiece.moveDown(board))) {
+                    //lock
+                    let rowCount = board.lock(currentPiece.getCells(), currentPiece.getType(), touchedRows);
+                    do board.checkAndClearLines(touchedRows, rowCount);
+
+                    do currentPiece.dispose();
+                    let nextType = Random.randomType();
+                    let currentPiece = Piece.new(nextType, spawnX, spawnY, boardOriginX, boardOriginY, cellSize);
+
+                    if (~(board.canPlace(currentPiece.getCells()))) {
+                        let gameOver = true;
+                    }
+                }
+            }
+
+            do Screen.clearScreen();
+            do board.draw();
+            do currentPiece.draw();
+
+            do Sys.wait(16);
+        }
+        return;
+    }
+}

@@ -80,7 +80,7 @@ class Board{
             let row = cell[0];
             let col = cell[1];
             let gridRow = grid[row];
-            let gridRow[col] = type;
+            let gridRow[col] = type + 1;
 
             let found = false;
             let j = 0;
